@@ -1,0 +1,16 @@
+.vscode/
+# Käännösvaiheen väliaikaistiedostot
+build/
+*.o
+*.d
+
+# Valmiit plugarit (binäärit)
+bin/
+*.dylib
+*.so
+*.dll
+*.vst3
+*.lv2/
+
+# Macin omat turhat tiedostot
+.DS_Store
