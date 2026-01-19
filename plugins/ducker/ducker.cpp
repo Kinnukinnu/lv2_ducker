@@ -19,7 +19,10 @@ class ducker : public Plugin {
     {
         //constructor body
     }
-
+    // Tämä funktio ajetaan automaattisesti, kun sample rate on tiedossa
+    void sampleRateChanged(double newSampleRate) override {
+        envelope.setSampleRate(newSampleRate);
+    }
     protected:
 
     const char *getLabel() const override { return "ducker"; }
@@ -43,19 +46,12 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
             float *outL = outputs[0];
             float *outR = outputs[1];
 
-            //set attack and realease
-            envelope.setAttack(Attack);
-            envelope.setRelease(Release);
+
 
             for (uint32_t i = 0; i < frames; i++) {
                 
-                // ------------------------------------------------------------
-                // KYSYMYS 2 (Mittaus):
-                // Meidän täytyy tietää, kuinka kovaa sidechain-signaali soi juuri nyt.
-                // Kutsu 'envelope.process()'-funktiota.
-                // Mitä syötät sille parametrina? (Vinkki: 'sidechain[i]' kertaa joku gain?)
-                // ------------------------------------------------------------
-                envelope.run( sidechain[i] * SidechainGain, currentEnvLevel );
+   
+                envelope.run( std::abs(sidechain[i] * SidechainGain), currentEnvLevel );
                 float envLevel = currentEnvLevel;
 
 
@@ -87,7 +83,7 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
                 parameter.ranges.max = 2.0f;
                 break;
             case  kOutLevel:
-                parameter.name = "Output Level";
+                parameter.name = "Output Gain";
                 parameter.symbol = "level";
                 parameter.ranges.def = 1.0f;
                 parameter.ranges.min = 0.0f;
@@ -98,11 +94,12 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
                 parameter.symbol = "SC_level";
                 parameter.ranges.def = 1.0f;
                 parameter.ranges.min = 0.0f;
-                parameter.ranges.max = 1.0f;
+                parameter.ranges.max = 2.0f;
                 break;
             case kThreshold:
                 parameter.name = "Threshold";
                 parameter.symbol = "threshold";
+                parameter.unit = "dB";
                 parameter.ranges.def = -10.0f;
                 parameter.ranges.min = -60.0f;
                 parameter.ranges.max = 0.0f;
@@ -117,6 +114,7 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
             case kAttack:
                 parameter.name = "Attack";
                 parameter.symbol = "attack";
+                parameter.unit = "ms";
                 parameter.ranges.def = 10.0f;
                 parameter.ranges.min = 1.0f;
                 parameter.ranges.max = 150.0f;
@@ -124,9 +122,10 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
             case kRelease:
                 parameter.name = "Release";
                 parameter.symbol = "release";
+                parameter.unit = "ms";
                 parameter.ranges.def = 10.0f;
                 parameter.ranges.min = 1.0f;
-                parameter.ranges.max = 150.0f;
+                parameter.ranges.max = 1000.0f;
                 break;
             default:
                 break;
@@ -153,9 +152,17 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
             case kSidechainGain: SidechainGain = value; break;
             case kThreshold:     Threshold = value; break;
             case kRatio:         Ratio = value; break;
-            case kAttack:        Attack = value; break;
-            case kRelease:       Release = value; break;
+            
+            case kAttack:        Attack = value; 
+            envelope.setAttack(Attack); // <--- Laske vain kun nuppi liikkuu!
+            break;
+                
+            case kRelease:         Release = value; 
+            envelope.setRelease(Release); // <--- Laske vain kun nuppi liikkuu!
+            break;
         }
+    
+
     }
     private:
         float InputGain;
