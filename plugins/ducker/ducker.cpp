@@ -94,7 +94,7 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
                 parameter.symbol = "SC_level";
                 parameter.ranges.def = 1.0f;
                 parameter.ranges.min = 0.0f;
-                parameter.ranges.max = 2.0f;
+                parameter.ranges.max = 4.0f;
                 break;
             case kThreshold:
                 parameter.name = "Threshold";
