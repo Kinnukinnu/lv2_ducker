@@ -30,7 +30,7 @@ This plugin implements an aggressive **Feed-Forward External Sidechain** topolog
 
 ## Development Setup
 
-The plugin was built using a remote development cycle. I used **Visual Studio Code** on macOS to edit code via SSH, connected to a dedicated **Linux Mint** machine. This workflow combines the ergonomics of a MacBook for typing with the reliability of native building and testing on Linux.
+The plugin was built using a remote development cycle. I used **Visual Studio Code** on macOS to edit code via SSH, connected to a dedicated **Linux Mint** machine. This workflow combines the ergonomics of a MacBook for typing with the reliability of native building and testing of LV2 plugins on Linux.
 
 ## Current State & Roadmap
 
