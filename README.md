@@ -34,8 +34,9 @@ The plugin was built using a remote development cycle. I used **Visual Studio Co
 ## Current State & Roadmap
 
 - [x] Successfully built LV2 plugin
-- [ ] Test on Mod Audio hardware
-- [ ] Create GUI (Optional)
+- [x] Test on Mod Audio hardware
+- [ ] Demo video
+- [ ] Create GUI
 
 ---
 
