@@ -74,6 +74,10 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
     private:
 
     void initParameter (uint32_t index, Parameter& parameter) override {
+        
+        // this allows mod devices to map parameters
+        parameter.hints = kParameterIsAutomable;
+
         switch (index) {
             case kInputGain:
                 parameter.name = "Input Gain";
