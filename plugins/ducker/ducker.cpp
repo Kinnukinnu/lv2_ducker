@@ -38,7 +38,7 @@ class ducker : public Plugin {
             void initParameter (uint32_t index, Parameter& parameter) override {
         
         // this allows mod devices to map parameters
-        parameter.hints = kParameterIsAutomable;
+        parameter.hints = kParameterIsAutomatable;
 
         switch (index) {
             case kInputGain:
