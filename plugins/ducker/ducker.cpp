@@ -18,11 +18,13 @@ class ducker : public Plugin {
 
     {
         //constructor body
+        sampleRateChanged(getSampleRate());
     }
-    // Tämä funktio ajetaan automaattisesti, kun sample rate on tiedossa
+  
     void sampleRateChanged(double newSampleRate) override {
         envelope.setSampleRate(newSampleRate);
     }
+
     protected:
 
     const char *getLabel() const override { return "ducker"; }
@@ -33,47 +35,7 @@ class ducker : public Plugin {
     uint32_t getVersion() const override { return d_version(1,0,0); }
     int64_t getUniqueId() const override { return d_cconst('d','u','c','k'); }
 
-void run(const float **inputs, float **outputs, uint32_t frames) override {
-            
-            const float *inL = inputs[0];
-            const float *inR = inputs[1];
-            // Sidechain signal, if sidechain not assigned use input 2 (R)
-            const float *sidechain = (DISTRHO_PLUGIN_NUM_INPUTS > 2) ? inputs[2] : inputs[1];
-
-            // convert threshold from float
-            float linearThreshold = std::pow(10.0f, Threshold / 20.0f);
-
-            float *outL = outputs[0];
-            float *outR = outputs[1];
-
-
-
-            for (uint32_t i = 0; i < frames; i++) {
-                
-   
-                envelope.run( std::abs(sidechain[i] * SidechainGain), currentEnvLevel );
-                float envLevel = currentEnvLevel;
-
-
-
-                // Alustetaan gain 1.0:aan (eli oletuksena ääni menee täysillä läpi)
-                float gainReduction = 1.0f; 
-
-  
-                if (envLevel > linearThreshold)
-                {
-                    float overshot = envLevel - linearThreshold; 
-                    gainReduction = 1.0 - (overshot * (1.0 -(1.0/ Ratio)));
-                    if (gainReduction < 0.0f) gainReduction = 0.0f;
-                }
-
-                outL[i] = inL[i] * InputGain * gainReduction * OutLevel;
-                outR[i] = inR[i] * InputGain * gainReduction * OutLevel; 
-            }
-    }
-    private:
-
-    void initParameter (uint32_t index, Parameter& parameter) override {
+            void initParameter (uint32_t index, Parameter& parameter) override {
         
         // this allows mod devices to map parameters
         parameter.hints = kParameterIsAutomable;
@@ -158,16 +120,57 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
             case kRatio:         Ratio = value; break;
             
             case kAttack:        Attack = value; 
-            envelope.setAttack(Attack); // <--- Laske vain kun nuppi liikkuu!
+            envelope.setAttack(Attack); 
             break;
                 
             case kRelease:         Release = value; 
-            envelope.setRelease(Release); // <--- Laske vain kun nuppi liikkuu!
+            envelope.setRelease(Release); 
             break;
         }
     
-
     }
+
+void run(const float **inputs, float **outputs, uint32_t frames) override {
+            
+            const float *inL = inputs[0];
+            const float *inR = inputs[1];
+            // Sidechain signal, if sidechain not assigned use input 2 (R)
+            const float *sidechain = (DISTRHO_PLUGIN_NUM_INPUTS > 2) ? inputs[2] : inputs[1];
+
+            // convert threshold from float
+            float linearThreshold = std::pow(10.0f, Threshold / 20.0f);
+
+            float *outL = outputs[0];
+            float *outR = outputs[1];
+
+
+
+            for (uint32_t i = 0; i < frames; i++) {
+                
+   
+                envelope.run( std::abs(sidechain[i] * SidechainGain), currentEnvLevel );
+                float envLevel = currentEnvLevel;
+
+
+
+                // Alustetaan gain 1.0:aan (eli oletuksena ääni menee täysillä läpi)
+                float gainReduction = 1.0f; 
+
+  
+                if (envLevel > linearThreshold)
+                {
+                    float overshot = envLevel - linearThreshold; 
+                    gainReduction = 1.0 - (overshot * (1.0 -(1.0/ Ratio)));
+                    if (gainReduction < 0.0f) gainReduction = 0.0f;
+                }
+
+                outL[i] = inL[i] * InputGain * gainReduction * OutLevel;
+                outR[i] = inR[i] * InputGain * gainReduction * OutLevel; 
+            }
+    }
+ 
+
+
     private:
         float InputGain;
         float OutLevel;
