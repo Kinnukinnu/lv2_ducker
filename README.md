@@ -2,6 +2,8 @@
 
 This is a work-in-progress sidechain ducker effect built with the DPF framework. My aim is to create a well-documented, easy-to-use, and reliable sidechain ducker pedal specifically for the [Mod Audio](https://mod.audio) platform. Mod Audio makes effect pedals that are basically LV2 plugin hosts running custom Linux kernel.
 
+#### [Video Demonstration in YouTube](https://www.youtube.com/watch?v=t3Esue3SPVE)
+
 ## Features
 
 - **Stereo In/Out:** Full stereo signal path (Inputs 1 & 2).
