@@ -19,7 +19,7 @@ class ducker : public Plugin {
     {
         //constructor body
     }
-    // Tämä funktio ajetaan automaattisesti, kun sample rate on tiedossa
+
     void sampleRateChanged(double newSampleRate) override {
         envelope.setSampleRate(newSampleRate);
     }
@@ -37,8 +37,8 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
             
             const float *inL = inputs[0];
             const float *inR = inputs[1];
-            // Sidechain signal, if sidechain not assigned use input 2 (R)
-            const float *sidechain = (DISTRHO_PLUGIN_NUM_INPUTS > 2) ? inputs[2] : inputs[1];
+            // Sidechain signal
+            const float *sidechain = inputs[2];
 
             // convert threshold from float
             float linearThreshold = std::pow(10.0f, Threshold / 20.0f);
@@ -46,20 +46,13 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
             float *outL = outputs[0];
             float *outR = outputs[1];
 
-
-
             for (uint32_t i = 0; i < frames; i++) {
-                
    
                 envelope.run( std::abs(sidechain[i] * SidechainGain), currentEnvLevel );
                 float envLevel = currentEnvLevel;
-
-
-
-                // Alustetaan gain 1.0:aan (eli oletuksena ääni menee täysillä läpi)
+       
                 float gainReduction = 1.0f; 
 
-  
                 if (envLevel > linearThreshold)
                 {
                     float overshot = envLevel - linearThreshold; 
@@ -74,6 +67,9 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
     private:
 
     void initParameter (uint32_t index, Parameter& parameter) override {
+        
+        parameter.hints = kParameterIsAutomatable; 
+        
         switch (index) {
             case kInputGain:
                 parameter.name = "Input Gain";
@@ -154,17 +150,14 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
             case kRatio:         Ratio = value; break;
             
             case kAttack:        Attack = value; 
-            envelope.setAttack(Attack); // <--- Laske vain kun nuppi liikkuu!
-            break;
+            envelope.setAttack(Attack); break;
                 
             case kRelease:         Release = value; 
-            envelope.setRelease(Release); // <--- Laske vain kun nuppi liikkuu!
+            envelope.setRelease(Release); 
             break;
-        }
-    
+        }   
 
     }
-    private:
         float InputGain;
         float OutLevel;
         float SidechainGain;
