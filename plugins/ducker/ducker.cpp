@@ -4,70 +4,79 @@
 
 START_NAMESPACE_DISTRHO
 
+/**
+ * A simple sidechain ducker plugin.
+ * Uses an external sidechain input to trigger gain reduction on the main stereo path.
+ */
 class ducker : public Plugin {
     public:
         ducker() : Plugin(kParameterCount, 0, 0), 
                    InputGain(1.0f),
-                    OutLevel(1.0f),
-                    SidechainGain(1.0f),
-                    Threshold(1.0f),
-                    Ratio(4.0f),
-                    Attack(5.0f),
-                    Release(50.0f),
-                    currentEnvLevel(0.0f)
-
+                   OutLevel(1.0f),
+                   SidechainGain(1.0f),
+                   Threshold(1.0f),
+                   Ratio(4.0f),
+                   Attack(5.0f),
+                   Release(50.0f),
+                   currentEnvLevel(0.0f)
     {
-        //constructor body
+        // Parameter defaults initialization
     }
 
     void sampleRateChanged(double newSampleRate) override {
         envelope.setSampleRate(newSampleRate);
     }
-    protected:
 
+    protected:
+    /* Plugin Metadata */
     const char *getLabel() const override { return "ducker"; }
-    const char *getDescription() const override {return "Simple ducker plugin.";}
+    const char *getDescription() const override { return "Simple sidechain ducker."; }
     const char *getMaker() const override { return "KinnuDSP"; }
     const char *getLicense() const override { return "MIT"; }
 
     uint32_t getVersion() const override { return d_version(1,0,0); }
     int64_t getUniqueId() const override { return d_cconst('d','u','c','k'); }
 
-void run(const float **inputs, float **outputs, uint32_t frames) override {
-            
+    /* Audio Processing */
+    void run(const float **inputs, float **outputs, uint32_t frames) override {
             const float *inL = inputs[0];
             const float *inR = inputs[1];
-            // Sidechain signal
+            // Assuming the third input (index 2) is the sidechain signal
             const float *sidechain = inputs[2];
-
-            // convert threshold from float
-            float linearThreshold = std::pow(10.0f, Threshold / 20.0f);
 
             float *outL = outputs[0];
             float *outR = outputs[1];
 
+            // Pre-calculate linear threshold from dB to avoid expensive math inside the sample loop
+            float linearThreshold = std::pow(10.0f, Threshold / 20.0f);
+
             for (uint32_t i = 0; i < frames; i++) {
-   
-                envelope.run( std::abs(sidechain[i] * SidechainGain), currentEnvLevel );
+                // Update envelope follower with the sidechain signal
+                envelope.run(std::abs(sidechain[i] * SidechainGain), currentEnvLevel);
                 float envLevel = currentEnvLevel;
        
                 float gainReduction = 1.0f; 
 
+                // Simple downward compression logic for the ducking effect
                 if (envLevel > linearThreshold)
                 {
                     float overshot = envLevel - linearThreshold; 
-                    gainReduction = 1.0 - (overshot * (1.0 -(1.0/ Ratio)));
+                    // Calculate reduction based on ratio: 1.0 is no reduction, 0.0 is silence
+                    gainReduction = 1.0f - (overshot * (1.0f - (1.0f / Ratio)));
+                    
+                    // Clamp to prevent negative gain if ratio or overshot is extreme
                     if (gainReduction < 0.0f) gainReduction = 0.0f;
                 }
 
+                // Apply processed gain to the main audio path
                 outL[i] = inL[i] * InputGain * gainReduction * OutLevel;
                 outR[i] = inR[i] * InputGain * gainReduction * OutLevel; 
             }
     }
-    private:
 
-    void initParameter (uint32_t index, Parameter& parameter) override {
-        
+    private:
+    /* Parameter Management */
+    void initParameter(uint32_t index, Parameter& parameter) override {
         parameter.hints = kParameterIsAutomatable; 
         
         switch (index) {
@@ -78,14 +87,14 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
                 parameter.ranges.min = 0.0f;
                 parameter.ranges.max = 2.0f;
                 break;
-            case  kOutLevel:
+            case kOutLevel:
                 parameter.name = "Output Gain";
                 parameter.symbol = "level";
                 parameter.ranges.def = 1.0f;
                 parameter.ranges.min = 0.0f;
                 parameter.ranges.max = 2.0f;
                 break;
-            case  kSidechainGain:
+            case kSidechainGain:
                 parameter.name = "Sidechain Level";
                 parameter.symbol = "SC_level";
                 parameter.ranges.def = 1.0f;
@@ -119,11 +128,9 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
                 parameter.name = "Release";
                 parameter.symbol = "release";
                 parameter.unit = "ms";
-                parameter.ranges.def = 10.0f;
+                parameter.ranges.def = 50.0f;
                 parameter.ranges.min = 1.0f;
                 parameter.ranges.max = 1000.0f;
-                break;
-            default:
                 break;
         }
     }
@@ -137,7 +144,7 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
             case kRatio:         return Ratio;
             case kAttack:        return Attack;
             case kRelease:       return Release;
-            default: return 0.0f;
+            default:             return 0.0f;
         }
     }
     
@@ -148,32 +155,26 @@ void run(const float **inputs, float **outputs, uint32_t frames) override {
             case kSidechainGain: SidechainGain = value; break;
             case kThreshold:     Threshold = value; break;
             case kRatio:         Ratio = value; break;
-            
-            case kAttack:        Attack = value; 
-            envelope.setAttack(Attack); break;
-                
-            case kRelease:         Release = value; 
-            envelope.setRelease(Release); 
-            break;
+            case kAttack:
+                Attack = value; 
+                envelope.setAttack(Attack); 
+                break;
+            case kRelease:
+                Release = value; 
+                envelope.setRelease(Release); 
+                break;
         }   
-
     }
-        float InputGain;
-        float OutLevel;
-        float SidechainGain;
-        float Threshold;
-        float Ratio;
-        float Attack;
-        float Release;
+
+    /* Internal State & DSP Components */
+    float InputGain, OutLevel, SidechainGain, Threshold, Ratio, Attack, Release;
 
     AttRelEnvelope envelope;
     double currentEnvLevel;
     
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ducker);
-
 };
 
 Plugin *createPlugin() { return new ducker(); }
-
 
 END_NAMESPACE_DISTRHO
