@@ -9,13 +9,20 @@ This is a work-in-progress sidechain ducker effect built with the DPF framework.
 - **Stereo In/Out:** Full stereo signal path (Inputs 1 & 2).
 - **External Sidechain:** Dedicated sidechain input (Input 3) for triggering the effect.
 
-## Compressor Algorithm (Technical Details)
+## Compressor Algorithm
 
-This plugin implements an aggressive **Feed-Forward External Sidechain** topology. Unlike standard digital compressors that often operate in the logarithmic (dB) domain, this ducker uses **Linear Amplitude Processing**.
+```text
+Main In (Inputs 1/2) ------------------> [ VCA Stage ] ----> Main Out
+                                             ^
+                                             | (Gain Control)
+Sidechain In (Input 3) -> [ Envelope ] -> [ Gain Computer ]
+```
+
+At the moment this plugin implements an aggressive **Feed-Forward External Sidechain** topology. Unlike standard digital compressors that often operate in the logarithmic (dB) domain, this ducker uses **Linear Amplitude Processing**.
 
 * **Topology:** Feed-Forward. The gain reduction is calculated solely based on the sidechain input, leaving the main signal path pure until the final VCA stage.
 * **Detector:** Asynchronous Peak Envelope Follower.
-    * Uses instantaneous peak detection (`std::abs`) for immediate reaction to transients (like kick drums).
+    * Uses instantaneous peak detection for immediate reaction to transients (like kick drums).
     * Attack and Release stages are decoupled 1-pole IIR filters (based on the *Citizen Chunks* example).
 * **Gain Computer:** Linear Hard Knee.
     * Gain reduction is calculated in the linear domain: `Gain = 1.0 - (Overshoot * Factor)`.
@@ -31,7 +38,7 @@ This plugin implements an aggressive **Feed-Forward External Sidechain** topolog
 
 ## Development Setup
 
-The plugin was built using a remote development cycle. I used **Visual Studio Code** on macOS to edit code via SSH, connected to a dedicated **Linux Mint** machine. This workflow combines the ergonomics of a MacBook for typing with the reliability of native building and testing of LV2 plugins on Linux.
+The plugin was built using a remote development cycle. I used **Visual Studio Code** on macOS to edit code via SSH, connected to a dedicated **Linux Mint** machine. This workflow combines the comfort of a MacBook for typing with the reliability of native building and testing of LV2 plugins on Linux.
 
 ## Current State & Roadmap
 
@@ -58,7 +65,7 @@ cd plugins/ducker
 make
 ```
 
-### 3. Check LV2 Metadata (Troubleshooting)
+### 3. Check LV2 Metadata
 The build process *should* automatically generate the Turtle (`.ttl`) files required by LV2 hosts. 
 
 **If the necessary `.ttl` files for LV2 format aren't generated automatically, run this:**
